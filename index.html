@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Domino Gaple - Fixed Viewport</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: #000000;
+            font-family: 'Arial', sans-serif;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 5px;
+        }
+
+        /* Menggunakan max-height berbasis viewport agar pas di layar HP apa pun */
+        .outer-frame {
+            border: 3px solid #ffcc33;
+            border-radius: 20px;
+            padding: 12px 10px;
+            background: #05010d;
+            width: 100%;
+            max-width: 380px;
+            height: 92vh; /* Mengunci tinggi agar tidak amblas/kosong */
+            max-height: 760px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            box-shadow: 0 0 25px rgba(255, 204, 51, 0.15);
+            perspective: 1000px;
+        }
+
+        /* TOP BAR */
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: #190a38;
+            padding: 10px 16px;
+            border-radius: 25px;
+            border: 2px solid #3c1a75;
+            height: 45px;
+        }
+        
+        .balance-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 18px;
+            font-weight: 900;
+            color: #ffffff;
+            font-family: 'Arial Black', sans-serif;
+        }
+        .balance-box .coin-icon {
+            background: #ffcc00;
+            color: #000;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .ping-box {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 4px 10px;
+            border-radius: 10px;
+        }
+        .ping-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 10px;
+        }
+        .ping-bars span { width: 3px; background: #39ff14; border-radius: 1px; }
+        .ping-bars span:nth-child(1) { height: 30%; }
+        .ping-bars span:nth-child(2) { height: 60%; }
+        .ping-bars span:nth-child(3) { height: 100%; }
+        .ping-text { color: #39ff14; font-size: 12px; font-weight: bold; }
+
+        /* FITUR ATAS & TOTAL MULTIPLIER TAMPILAN */
+        .features-row {
+            display: flex;
+            gap: 8px;
+            margin-top: 8px;
+            height: 48px;
+        }
+        .feat-card {
+            flex: 1;
+            background: linear-gradient(180deg, #180931 0%, #090314 100%);
+            border: 2px solid #ffcc33;
+            border-radius: 8px;
+            padding: 4px;
+            text-align: center;
+        }
+        .feat-card .title { font-size: 9px; color: #4da6ff; font-weight: bold; letter-spacing: 0.5px; }
+        .feat-card .value { font-size: 13px; color: #ffcc33; font-weight: 900; margin-top: 2px; }
+        
+        .feat-card.multiplier-total-box { border-color: #ff00ff; }
+        .feat-card.multiplier-total-box .title { color: #ff66ff; }
+        .feat-card.multiplier-total-box .value { color: #00ffff; text-shadow: 0 0 5px #00ffff; }
+
+        /* AREA PAPAN UTAMA (Mencegah amblas/kosong) */
+        .slot-board-wrapper {
+            flex: 1;
+            margin: 10px 0;
+            background: #090314;
+            border: 3px solid #ffcc33;
+            border-radius: 10px;
+            padding: 6px;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.9);
+            display: flex;
+            min-height: 320px; /* Jaminan minimum tinggi agar tidak menciut */
+        }
+
+        .slot-board {
+            width: 100%;
+            height: 100%;
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            grid-template-rows: repeat(5, 1fr);
+            gap: 5px;
+        }
+
+        .slot-cell {
+            background: radial-gradient(circle, #19093a 0%, #0c041f 100%);
+            border: 1.5px solid #2d1359;
+            border-radius: 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+            box-shadow: inset 0 0 6px rgba(0,0,0,0.6);
+            padding: 2px;
+            overflow: hidden;
+        }
+
+        /* DESAIN KARTU DOMINO 3D */
+        .domino-card {
+            width: 90%;
+            height: 95%;
+            background: linear-gradient(145deg, #ffffff 0%, #e6e6e6 100%);
+            border-radius: 4px;
+            border: 1px solid #aaa;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 4px 2px;
+            box-shadow: 0 3px 5px rgba(0,0,0,0.4), inset 0 1px 0 #fff;
+            transform-style: preserve-3d;
+        }
+
+        .domino-line {
+            width: 100%;
+            height: 2px;
+            background: #b31937;
+            margin: 1px 0;
+        }
+
+        .domino-half {
+            flex: 1;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 1px;
+            align-items: center;
+            justify-items: center;
+            width: 100%;
+        }
+
+        .dot {
+            width: 4px;
+            height: 4px;
+            background: radial-gradient(circle at 35% 35%, #ff2a2a, #800000);
+            border-radius: 50%;
+        }
+        .dot.empty { background: transparent; }
+
+        /* SIMBOL PERKALIAN */
+        .multiplier-card {
+            width: 90%;
+            height: 95%;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-weight: 900;
+            font-family: 'Arial Black', sans-serif;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.8);
+            border: 1.5px solid #fff;
+        }
+
+        .mult-low { background: linear-gradient(135deg, #00c6ff, #0072ff); border-color: #00ffff; }
+        .mult-med { background: linear-gradient(135deg, #f857a6, #ff5858); border-color: #ff007f; }
+        .mult-high { background: linear-gradient(135deg, #f12711, #f5af19); border-color: #ffff00; }
+        .mult-god { background: linear-gradient(135deg, #b224ef, #7579ff); border-color: #e0aaff; box-shadow: 0 0 10px #b224ef; }
+
+        .multiplier-card .x-text { font-size: 8px; opacity: 0.9; }
+        .multiplier-card .num-text { font-size: 14px; }
+
+        /* ANIMASI */
+        .spinning .domino-card, .spinning .multiplier-card {
+            animation: cinematicSpin 0.12s linear infinite;
+        }
+        @keyframes cinematicSpin {
+            0% { transform: scaleY(1.2) translateY(-10px); filter: blur(2px); }
+            100% { transform: scaleY(1.2) translateY(10px); filter: blur(2px); }
+        }
+
+        .settling .domino-card, .settling .multiplier-card {
+            animation: slamDown 0.25s cubic-bezier(0.25, 1, 0.5, 1.2) forwards;
+        }
+        @keyframes slamDown {
+            0% { transform: scale(1.4); filter: blur(2px); }
+            100% { transform: scale(1); }
+        }
+
+        .drop-animation .domino-card, .drop-animation .multiplier-card {
+            animation: dropBounce 0.35s cubic-bezier(0.7, 0, 0.3, 1.4) forwards;
+        }
+        @keyframes dropBounce {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(0); }
+        }
+
+        .pop-win .domino-card, .pop-win .multiplier-card {
+            animation: cinematicExplode 0.35s ease-in forwards;
+        }
+        @keyframes cinematicExplode {
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        /* PANEL BAWAH */
+        .status-container {
+            background: #000000;
+            border: 2px solid #1c0a3a;
+            border-radius: 8px;
+            padding: 6px 12px;
+            text-align: right;
+            margin-bottom: 6px;
+        }
+        .status-text { color: #00ffcc; font-size: 13px; font-weight: bold; }
+
+        .bottom-control { background: #110624; padding: 8px; border-radius: 12px; border: 2px solid #230f44; }
+        .control-layout { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        
+        .bet-machine {
+            display: flex;
+            align-items: center;
+            background: #04010a;
+            border: 1.5px solid #230f44;
+            border-radius: 30px;
+            padding: 3px;
+            flex: 1;
+            justify-content: space-between;
+        }
+        .btn-action-bet {
+            background: #ffcc33; color: #000000; border: none; width: 34px; height: 34px; border-radius: 50%;
+            font-size: 22px; font-weight: 900; cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+        .bet-info-text { text-align: center; }
+        .bet-info-text .val { font-size: 15px; color: #ffffff; font-weight: 900; font-family: 'Arial Black', sans-serif; }
+        .bet-info-text .lbl { font-size: 8px; color: #765da6; font-weight: bold; }
+
+        .btn-spin-trigger {
+            background: linear-gradient(180deg, #52ff52 0%, #009900 100%);
+            color: white; border: 2px solid #ffffff; border-radius: 30px; padding: 10px 24px;
+            font-size: 18px; font-weight: 900; font-family: 'Arial Black', sans-serif; cursor: pointer;
+            box-shadow: 0 0 12px rgba(0,255,0,0.6); min-width: 100px;
+        }
+        .btn-spin-trigger:disabled { background: #444; border-color: #222; box-shadow: none; color: #777; }
+    </style>
+</head>
+<body>
+
+<div class="outer-frame">
+    <div class="top-bar">
+        <div class="balance-box"><div class="coin-icon">$</div><span id="balance-val">2.125.500</span></div>
+        <div class="ping-box"><div class="ping-bars"><span></span><span></span><span></span></div><div class="ping-text">51ms</div></div>
+    </div>
+
+    <div class="features-row">
+        <div class="feat-card"><div class="title">BELI SPIN GRATIS</div><div class="value">200M</div></div>
+        <div class="feat-card multiplier-total-box">
+            <div class="title">TOTAL MULTIPLIER</div>
+            <div class="value" id="total-multiplier-display">X1</div>
+        </div>
+    </div>
+
+    <!-- Wrapper Khusus Papan -->
+    <div class="slot-board-wrapper">
+        <div class="slot-board" id="board"></div>
+    </div>
+
+    <div class="status-container"><div class="status-text" id="status-text">Coba lagi! Tekan SPIN.</div></div>
+
+    <div class="bottom-control">
+        <div class="control-layout">
+            <div class="bet-machine">
+                <button class="btn-action-bet" onclick="adjustBet(-5000)">-</button>
+                <div class="bet-info-text"><div class="val" id="total-bet-val">50.000</div><div class="lbl">TOTAL BET</div></div>
+                <button class="btn-action-bet" onclick="adjustBet(5000)">+</button>
+            </div>
+            <button class="btn-spin-trigger" id="spin-btn" onclick="startSpin()">SPIN</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const dominoLayouts = {
+        0: [0,0,0, 0,0,0, 0,0,0], 1: [0,0,0, 0,1,0, 0,0,0], 2: [1,0,0, 0,0,0, 0,0,1],
+        3: [1,0,0, 0,1,0, 0,0,1], 4: [1,0,1, 0,0,0, 1,0,1], 5: [1,0,1, 0,1,0, 1,0,1], 6: [1,0,1, 1,0,1, 1,0,1]
+    };
+    const dominoPairs = [[0,0], [1,1], [2,2], [3,3], [4,4], [5,5], [6,6], [1,2], [2,3], [3,4], [4,5], [5,6], [0,6], [2,5]];
+    const multipliersPool = [2, 5, 8, 10, 15, 25, 150, 250, 500];
+
+    const rows = 5, cols = 6;
+    let balance = 2125500, currentBet = 50000, isPlaying = false, grid = [];
+    let sessionMultiplier = 1;
+
+    const board = document.getElementById('board');
+    const statusText = document.getElementById('status-text');
+    const multDisplay = document.getElementById('total-multiplier-display');
+
+    function generateDominoHTML(topDots, bottomDots) {
+        let topHtml = '', bottomHtml = '';
+        dominoLayouts[topDots].forEach(bit => topHtml += `<div class="${bit === 1 ? 'dot' : 'dot empty'}"></div>`);
+        dominoLayouts[bottomDots].forEach(bit => bottomHtml += `<div class="${bit === 1 ? 'dot' : 'dot empty'}"></div>`);
+        return `<div class="domino-card" data-val="${topDots}-${bottomDots}"><div class="domino-half">${topHtml}</div><div class="domino-line"></div><div class="domino-half">${bottomHtml}</div></div>`;
+    }
+
+    function generateMultiplierHTML(value) {
+        let toneClass = 'mult-low';
+        if(value >= 8 && value <= 25) toneClass = 'mult-med';
+        if(value === 150 || value === 250) toneClass = 'mult-high';
+        if(value === 500) toneClass = 'mult-god';
+        return `<div class="multiplier-card ${toneClass}" data-multiplier="${value}"><span class="x-text">BONUS</span><span class="num-text">x${value}</span></div>`;
+    }
+
+    function getRandomItem() {
+        if (Math.random() < 0.08) {
+            let randomMult = multipliersPool[Math.floor(Math.random() * multipliersPool.length)];
+            return generateMultiplierHTML(randomMult);
+        } else {
+            let pair = dominoPairs[Math.floor(Math.random() * dominoPairs.length)];
+            return generateDominoHTML(pair[0], pair[1]);
+        }
+    }
+
+    function initBoard() {
+        board.innerHTML = ''; grid = [];
+        for (let r = 0; r < rows; r++) {
+            grid[r] = [];
+            for (let c = 0; c < cols; c++) {
+                let pair = dominoPairs[(r + c) % dominoPairs.length];
+                grid[r][c] = generateDominoHTML(pair[0], pair[1]);
+                let cell = document.createElement('div'); cell.className = 'slot-cell'; cell.id = `cell-${r}-${c}`;
+                cell.innerHTML = grid[r][c]; board.appendChild(cell);
+            }
+        }
+    }
+
+    function adjustBet(amount) {
+        if (isPlaying) return;
+        if (currentBet + amount >= 5000) { currentBet += amount; document.getElementById('total-bet-val').innerText = currentBet.toLocaleString('id-ID'); }
+    }
+
+    function startSpin() {
+        if (isPlaying) return;
+        if (balance < currentBet) { statusText.innerText = "Saldo Kurang!"; return; }
+
+        isPlaying = true; document.getElementById('spin-btn').disabled = true;
+        balance -= currentBet; document.getElementById('balance-val').innerText = balance.toLocaleString('id-ID');
+        statusText.innerText = "Mengocok papan...";
+        sessionMultiplier = 1; multDisplay.innerText = "X1";
+
+        for (let c = 0; c < cols; c++) {
+            setTimeout(() => {
+                for (let r = 0; r < rows; r++) { document.getElementById(`cell-${r}-${c}`).className = 'slot-cell spinning'; }
+            }, c * 60);
+        }
+
+        let shuffleInterval = setInterval(() => {
+            document.querySelectorAll('.spinning').forEach(cell => { cell.innerHTML = getRandomItem(); });
+        }, 50);
+
+        setTimeout(() => {
+            clearInterval(shuffleInterval);
+            stopColumnProgressively(0);
+        }, 900);
+    }
+
+    function stopColumnProgressively(colIndex) {
+        if (colIndex >= cols) {
+            setTimeout(() => checkMatches(1), 150);
+            return;
+        }
+        for (let r = 0; r < rows; r++) {
+            let cell = document.getElementById(`cell-${r}-${colIndex}`);
+            grid[r][colIndex] = getRandomItem();
+            cell.innerHTML = grid[r][colIndex];
+            cell.className = 'slot-cell settling';
+        }
+        setTimeout(() => stopColumnProgressively(colIndex + 1), 100);
+    }
+
+    function checkMatches(comboCount) {
+        let counts = {};
+        let localMultipliersFound = 0;
+
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                let htmlStr = grid[r][c];
+                if (!htmlStr) continue;
+                let cardMatch = htmlStr.match(/data-val="([^"]+)"/);
+                if (cardMatch) counts[cardMatch[1]] = (counts[cardMatch[1]] || 0) + 1;
+                let multMatch = htmlStr.match(/data-multiplier="(\d+)"/);
+                if (multMatch) localMultipliersFound += parseInt(multMatch[1]);
+            }
+        }
+
+        let winningCards = [];
+        for (let val in counts) { if (counts[val] >= 5) winningCards.push(val); }
+
+        if (winningCards.length === 0) {
+            statusText.innerText = comboCount === 1 ? "Coba lagi! Tekan SPIN." : "💥 Selesai! Ronde berakhir.";
+            endRound(); return;
+        }
+
+        if (localMultipliersFound > 0) {
+            sessionMultiplier += localMultipliersFound;
+            multDisplay.innerText = "X" + sessionMultiplier;
+        }
+
+        let baseWinThisStep = 0;
+        winningCards.forEach(val => {
+            baseWinThisStep += currentBet * (counts[val] * 0.3) * comboCount;
+            for (let r = 0; r < rows; r++) {
+                for (let c = 0; c < cols; c++) {
+                    if (grid[r][c] && grid[r][c].includes(`data-val="${val}"`)) {
+                        document.getElementById(`cell-${r}-${c}`).className = 'slot-cell pop-win';
+                    }
+                }
+            }
+        });
+
+        let totalFinalWin = Math.floor(baseWinThisStep * sessionMultiplier);
+        balance += totalFinalWin;
+        document.getElementById('balance-val').innerText = balance.toLocaleString('id-ID');
+        statusText.innerHTML = `🎉 MATCH! Poin dikali <span style="color:#00ffff;">X${sessionMultiplier}</span>! +Rp ${totalFinalWin.toLocaleString('id-ID')}`;
+
+        setTimeout(() => tumbleGrid(winningCards, comboCount), 400);
+    }
+
+    function tumbleGrid(winningCards, comboCount) {
+        for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+                if (grid[r][c]) {
+                    let m = grid[r][c].match(/data-val="([^"]+)"/);
+                    if (m && winningCards.includes(m[1])) grid[r][c] = null;
+                }
+            }
+        }
+
+        for (let c = 0; c < cols; c++) {
+            let colItems = [];
+            for (let r = rows - 1; r >= 0; r--) { if (grid[r][c] !== null) colItems.push(grid[r][c]); }
+            while (colItems.length < rows) { colItems.push(getRandomItem()); }
+            let idx = 0;
+            for (let r = rows - 1; r >= 0; r--) {
+                let cell = document.getElementById(`cell-${r}-${c}`);
+                let oldVal = grid[r][c];
+                grid[r][c] = colItems[idx++];
+                cell.innerHTML = grid[r][c];
+                cell.className = oldVal === null ? 'slot-cell drop-animation' : 'slot-cell';
+            }
+        }
+        setTimeout(() => checkMatches(comboCount + 1), 400);
+    }
+
+    function endRound() { isPlaying = false; document.getElementById('spin-btn').disabled = false; }
+    initBoard();
+</script>
+
+</body>
+</html>
