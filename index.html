@@ -307,10 +307,10 @@
     </div>
 
     <!-- TULISAN BARU DISINI -->
-    <div class="brand-banner">Rohmat kontol</div>
+    <div class="brand-banner">Leman Demino Gacor</div>
 
     <div class="features-row">
-        <div class="feat-card"><div class="title">BELI SPIN GRATIS</div><div class="value">200M</div></div>
+        <!-- Bagian Beli Spin sudah dihilangkan -->
         <div class="feat-card multiplier-total-box">
             <div class="title">TOTAL MULTIPLIER</div>
             <div class="value" id="total-multiplier-display">X1</div>
@@ -344,7 +344,8 @@
     const multipliersPool = [2, 5, 8, 10, 15, 25, 150, 250, 500];
 
     const rows = 5, cols = 6;
-    let balance = 2125500, currentBet = 50000, isPlaying = false, grid = [];
+  let balance = localStorage.getItem('saldo_game_domino') ? parseInt(localStorage.getItem('saldo_game_domino')) : 2125500, currentBet = 50000, isPlaying = false, grid = [];
+
     let sessionMultiplier = 1;
 
     const board = document.getElementById('board');
@@ -399,7 +400,9 @@
         if (balance < currentBet) { statusText.innerText = "Saldo Kurang!"; return; }
 
         isPlaying = true; document.getElementById('spin-btn').disabled = true;
-        balance -= currentBet; document.getElementById('balance-val').innerText = balance.toLocaleString('id-ID');
+        balance -= currentBet; document.getElementById('balance-val').innerText = balance.toLocaleString('id-ID'); localStorage.setItem('saldo_game_domino', balance);
+
+
         statusText.innerText = "Mengocok papan...";
         sessionMultiplier = 1; multDisplay.innerText = "X1";
 
@@ -475,7 +478,8 @@
 
         let totalFinalWin = Math.floor(baseWinThisStep * sessionMultiplier);
         balance += totalFinalWin;
-        document.getElementById('balance-val').innerText = balance.toLocaleString('id-ID');
+        document.getElementById('balance-val').innerText = balance.toLocaleString('id-ID'); localStorage.setItem('saldo_game_domino', balance);
+
         statusText.innerHTML = `🎉 MATCH! Poin dikali <span style="color:#00ffff;">X${sessionMultiplier}</span>! +Rp ${totalFinalWin.toLocaleString('id-ID')}`;
 
         setTimeout(() => tumbleGrid(winningCards, comboCount), 400);
@@ -512,4 +516,5 @@
 </script>
 
 </body>
-</html> 
+</html>
+            
